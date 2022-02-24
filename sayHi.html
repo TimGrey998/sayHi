@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>say Hi to the world!</title>
+    <style>
+      #app {
+        font-family: Avenir, Helvetica, Arial, Helvetica, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-align: center;
+        color: #2c3e50;
+        margin-top: 60px;
+      }
+      button {
+          cursor: pointer;
+      }
+      strong {
+          font-weight: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <h1>Hello Web3!🌏</h1>
+      <h2>👋 {{counts}}</h2>
+      <h3>logged in as:<strong>{{account.slice(0,4) + '...' + account.slice(account.length-4,account.length)}}</strong></h3>
+      <button @click="connectWallet" v-if="!isConnected">Connect Wallet</button>
+      <button @click="sayHi" v-else>Say Hi!</button>
+    </div>
+  </body>
+  <script src="https://unpkg.com/vue@next"></script>
+  <script
+    src="https://cdn.ethers.io/lib/ethers-5.1.umd.min.js"
+    type="text/javascript"
+  ></script>
+  <script>
+    const { ethereum } = window;
+    const contractAddress = "0x767454d51daa4c7620b9b0e6e1723c07f9ef313a";
+    const contractABI = [
+      { inputs: [], stateMutability: "nonpayable", type: "constructor" },
+      {
+        inputs: [],
+        name: "add",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+      },
+      {
+        inputs: [],
+        name: "getCounts",
+        outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ];
+    // 创建合约实例
+    const provider = new ethers.providers.Web3Provider(ethereum);
+    const signer = provider.getSigner();
+    const CounterContract = new ethers.Contract(
+      contractAddress,
+      contractABI,
+      signer
+    );
+
+    const app = Vue.createApp({
+      data() {
+        return {
+          account: "",
+          isConnected: "",
+          counts: "0",
+        };
+      },
+      mounted() {
+        this.checkMetaMask();
+        this.checkIfWalletConnected();
+        this.getCounts();
+      },
+      methods: {
+        async checkIfWalletConnected() {
+          const accounts = await ethereum.request({
+            method: "eth_accounts",
+          });
+          if (accounts.length) {
+            this.account = accounts[0];
+            this.isConnected = true;
+            console.log(`Found account address:${this.account}`);
+          }
+        },
+        checkMetaMask() {
+          if (ethereum) {
+            console.log(`MetaMask is available`);
+          } else
+            throw new Error("Please download Metamask from http://metamask.io");
+        },
+        async connectWallet() {
+          this.checkMetaMask();
+          const accounts = await ethereum.request({
+            method: "eth_requestAccounts",
+          });
+          this.account = accounts[0];
+          console.log(`Found account address:${this.account}`);
+        },
+        async getCounts() {
+          const counts = await CounterContract.getCounts();
+          this.counts = counts.toNumber();
+          console.log(`current count is ${this.counts}`);
+        },
+        async sayHi() {
+          const tx = await CounterContract.add({
+              gasLimit: 150000,
+          });
+          await tx.wait();
+          this.getCounts();
+        },
+      },
+    });
+    app.mount("#app");
+  </script>
+</html>
