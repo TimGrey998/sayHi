@@ -1,0 +1,90 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  opacity: 0.8;
+  background-image: radial-gradient(#444cf7 0.5px, #e5e5f7 0.5px);
+  background-size: 10px 10px;
+}
+#app {
+  font-family: Avenir, Helvetica, Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* color: #2c3e50; */
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+/* 按钮样式 */
+.say_hi {
+  margin-top: 20px;
+  position: relative
+}
+/* 加载样式 */
+.loader {
+  width: 24px;
+  height: 24px;
+  border: 5px solid #f34640;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  position:absolute;
+  left: 20px;
+  top: 23px;
+  box-sizing: border-box;
+  margin-right: 20px;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.hello_world {
+  font-size: 90px;
+  margin: 20px 0 20px 0;
+}
+.counts {
+  font-size: 50px;
+  margin: 20px 0 20px 0;
+}
+.account_info {
+  font-size: 30px;
+}
+button {
+  padding: 1.3em 3em;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  font-weight: 500;
+  color: #000;
+  background-color: #fff;
+  border: none;
+  border-radius: 45px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease 0s;
+  cursor: pointer;
+  outline: none;
+}
+
+button:hover {
+  background-color: #f34640;
+  box-shadow: 0px 15px 20px rgba(240, 97, 14, 0.4);
+  color: #fff;
+  transform: translateY(-7px);
+}
+
+button:active {
+  transform: translateY(-1px);
+}
+strong {
+  font-weight: 1000;
+}

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Say Hi to the world!👋</title>
+    <script src="https://unpkg.com/vue@next"></script>
+    <script
+      src="https://cdn.ethers.io/lib/ethers-5.1.umd.min.js"
+      type="text/javascript"
+    ></script>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <h1 class="hello_world">Hello World!🌏</h1>
+      <h2 class="counts">👋 {{counts}}</h2>
+      <h3 class="account_info" :style="notice_color" v-if="isConnected">
+        {{notice}}
+      </h3>
+      <button @click="connectWallet" v-if="!isConnected">Connect Wallet</button>
+      <div class="say_hi">
+        <span class="loader" v-if="loading"></span>
+        <button @click="sayHi" v-if="isConnected" :disabled="txStatus">
+          Say Hi!
+        </button>
+      </div>
+    </div>
+  </body>
+  <script>
+    const { ethereum } = window;
+    const contractAddress = "0x767454d51daa4c7620b9b0e6e1723c07f9ef313a";
+    const contractABI = [
+      { inputs: [], stateMutability: "nonpayable", type: "constructor" },
+      {
+        inputs: [],
+        name: "add",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+      },
+      {
+        inputs: [],
+        name: "getCounts",
+        outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ];
+    // 创建合约实例
+    const provider = new ethers.providers.Web3Provider(ethereum);
+    const signer = provider.getSigner();
+    const CounterContract = new ethers.Contract(
+      contractAddress,
+      contractABI,
+      signer
+    );
+
+    const app = Vue.createApp({
+      data() {
+        return {
+          account: "",
+          isConnected: "",
+          counts: "?",
+          loading: false,
+          notice: ``,
+          txStatus: false,
+          network: ethereum.networkVersion,
+        };
+      },
+      watch: {
+        network(newVal, oldVal) {
+          if (newVal != "137") {
+            this.notice = `Please switch to Polygon mainnet!`;
+            this.notice_color = "color:red";
+            this.txStatus = false;
+          } else {
+            this.notice = `Hi~ ${this.account.slice(
+              0,
+              4
+            )}...${this.account.slice(
+              this.account.length - 4,
+              this.account.length
+            )},have a nice day~`;
+          }
+        },
+      },
+      mounted() {
+        this.checkMetaMask();
+        this.checkIfWalletConnected();
+        this.checkNetwork();
+      },
+      methods: {
+        // 检查是否安装MetaMask
+        checkMetaMask() {
+          if (ethereum) {
+            console.log(`MetaMask is available`);
+          } else alert("Please download Metamask from http://metamask.io");
+        },
+        // 检查钱包是否连接
+        async checkIfWalletConnected() {
+          const accounts = await ethereum.request({
+            method: "eth_accounts",
+          });
+          if (accounts.length) {
+            this.account = accounts[0];
+            console.log(this.account.slice(0,4));
+            this.isConnected = true;
+          }
+        },
+        // 检查网络是否正确
+        checkNetwork() {
+          if (ethereum.networkVersion != "137") {
+            this.notice = `Please switch to Polygon mainnet!`;
+            this.notice_color = "color:red";
+            return false;
+          } else {
+            this.notice =
+              "Hi~" +
+              this.account.slice(0, 4) +
+              "..." +
+              this.account.slice(this.account.length - 4, this.account.length) +
+              "have a nice day~";
+            return true;
+          }
+        },
+        // 连接钱包
+        async connectWallet() {
+          this.checkMetaMask();
+          const accounts = await ethereum.request({
+            method: "eth_requestAccounts",
+          });
+          this.account = accounts[0];
+          this.isConnected = true;
+          if (this.account) this.getCounts();
+        },
+        async getCounts() {
+          const counts = await CounterContract.getCounts();
+          this.counts = counts.toNumber();
+        },
+        async sayHi() {
+          this.checkNetwork();
+          this.loading = true;
+          const tx = await CounterContract.add({
+            gasLimit: 150000,
+          });
+          await tx.wait();
+          this.loading = false;
+          this.getCounts();
+        },
+      },
+    });
+    app.mount("#app");
+  </script>
+</html>
