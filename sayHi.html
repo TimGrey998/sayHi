@@ -14,15 +14,18 @@
     <div id="app">
       <h1 class="hello_world">Hello World!🌏</h1>
       <h2 class="counts">👋 {{counts}}</h2>
-      <h3 class="account_info" :style="notice_color" v-if="isConnected">
-        {{notice}}
-      </h3>
-      <button @click="connectWallet" v-if="!isConnected">Connect Wallet</button>
-      <div class="say_hi">
-        <span class="loader" v-if="loading"></span>
-        <button @click="sayHi" v-if="isConnected" :disabled="txStatus">
-          Say Hi!
-        </button>
+        <div style="height: 100px;">
+          <h3 class="tip" v-if="polygon && isConnected">
+            Hi,<strong>{{account.slice(0,4)+'...'+account.slice(account.length-4,account.length)}}</strong>,have a good day🥰
+          </h3>
+          <h3 class="tip" style="color:red" v-if="!polygon && isConnected">Please switch to Polygon mainnet!</h3>
+        </div>
+        <button @click="connectWallet" v-if="!isConnected">Connect Wallet</button>
+        <div class="say_hi">
+          <span class="loader" v-if="hi_loading"></span>
+          <button @click="sayHi" v-if="isConnected" :disabled="!polygon">
+            Say Hi!
+          </button>
       </div>
     </div>
   </body>
@@ -54,40 +57,29 @@
       contractABI,
       signer
     );
-
     const app = Vue.createApp({
       data() {
         return {
           account: "",
           isConnected: "",
           counts: "?",
-          loading: false,
-          notice: ``,
+          counts_loading: false,
+          hi_loading: false,
           txStatus: false,
+          polygon: Boolean,
           network: ethereum.networkVersion,
         };
-      },
-      watch: {
-        network(newVal, oldVal) {
-          if (newVal != "137") {
-            this.notice = `Please switch to Polygon mainnet!`;
-            this.notice_color = "color:red";
-            this.txStatus = false;
-          } else {
-            this.notice = `Hi~ ${this.account.slice(
-              0,
-              4
-            )}...${this.account.slice(
-              this.account.length - 4,
-              this.account.length
-            )},have a nice day~`;
-          }
-        },
       },
       mounted() {
         this.checkMetaMask();
         this.checkIfWalletConnected();
-        this.checkNetwork();
+        // 监听网络变化
+        ethereum.on('chainChanged', (id) => {
+          if(id == '0x89') {
+            this.polygon = true;
+            this.getCounts();
+          }
+        })
       },
       methods: {
         // 检查是否安装MetaMask
@@ -103,24 +95,8 @@
           });
           if (accounts.length) {
             this.account = accounts[0];
-            console.log(this.account.slice(0,4));
             this.isConnected = true;
-          }
-        },
-        // 检查网络是否正确
-        checkNetwork() {
-          if (ethereum.networkVersion != "137") {
-            this.notice = `Please switch to Polygon mainnet!`;
-            this.notice_color = "color:red";
-            return false;
-          } else {
-            this.notice =
-              "Hi~" +
-              this.account.slice(0, 4) +
-              "..." +
-              this.account.slice(this.account.length - 4, this.account.length) +
-              "have a nice day~";
-            return true;
+            if(window.ethereum.chainId == '0x89') this.getCounts();
           }
         },
         // 连接钱包
@@ -138,13 +114,11 @@
           this.counts = counts.toNumber();
         },
         async sayHi() {
-          this.checkNetwork();
-          this.loading = true;
-          const tx = await CounterContract.add({
-            gasLimit: 150000,
-          });
+          this.hi_loading = true;
+          let tx = await CounterContract.add();
           await tx.wait();
-          this.loading = false;
+          console.log("finish")
+          this.hi_loading = false;
           this.getCounts();
         },
       },
